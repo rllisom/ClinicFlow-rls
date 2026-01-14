@@ -1,17 +1,18 @@
 package com.salesianos.triana.dam.clinicflowrls.service;
 
 import com.salesianos.triana.dam.clinicflowrls.dto.CreateCitaRequest;
-import com.salesianos.triana.dam.clinicflowrls.model.Cita;
-import com.salesianos.triana.dam.clinicflowrls.model.Estado;
-import com.salesianos.triana.dam.clinicflowrls.model.Paciente;
-import com.salesianos.triana.dam.clinicflowrls.model.Profesional;
+import com.salesianos.triana.dam.clinicflowrls.dto.CreateConsultaRequest;
+import com.salesianos.triana.dam.clinicflowrls.model.*;
 import com.salesianos.triana.dam.clinicflowrls.repository.CitaRepository;
 import com.salesianos.triana.dam.clinicflowrls.repository.ConsultaRepository;
 import com.salesianos.triana.dam.clinicflowrls.repository.PacienteRepository;
 import com.salesianos.triana.dam.clinicflowrls.repository.ProfesionalRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,6 +26,14 @@ public class CitaService {
     private final PacienteRepository pacienteRepository;
     private final ProfesionalRepository profesionalRepository;
     private final ConsultaRepository consultaRepository;
+
+
+    @Transactional
+    public Page<Cita> getAll(Pageable pageable){
+        Page<Cita> citas = citaRepository.findAll(pageable);
+        if(citas.isEmpty()) throw new EntityNotFoundException("No hay citas");
+        return citas;
+    }
 
     public List<Cita> getCistasPorPaciente(Long pacienteId){
 
@@ -95,10 +104,35 @@ public class CitaService {
 
     }
 
+    public Cita registrarConsulta(Long citaId, CreateConsultaRequest consultaRequest){
+        Cita cita = citaRepository.findById(citaId)
+                .orElseThrow(()->new EntityNotFoundException("No se ha encontrado la cita con id %d".formatted(citaId)));
+
+        if(cita.getEstado() != Estado.PROGRAMADA)
+            throw new IllegalArgumentException("La cita ya está atendida o ha sido cancelada");
+
+        Consulta consulta = toEntity(consultaRequest,cita);
+        cita.setEstado(Estado.ATENDIDA);
+
+        consultaRepository.save(consulta);
+
+        return citaRepository.save(cita);
+
+    }
+
+    public static Consulta toEntity(CreateConsultaRequest consulta, Cita cita){
+        return Consulta.builder()
+                .observaciones(consulta.observaciones())
+                .diagnostico(consulta.diagnostico())
+                .fecha(consulta.fecha())
+                .cita(cita)
+                .build();
+    }
+
     public Cita toEntity(CreateCitaRequest requestCreate, Paciente paciente,Profesional profesional){
         return Cita.builder()
                 .fechaHora(requestCreate.fechaHora())
-                .estado((requestCreate.estado()))
+                .estado(Estado.PROGRAMADA)
                 .paciente(paciente)
                 .profesional(profesional)
                 .build();
