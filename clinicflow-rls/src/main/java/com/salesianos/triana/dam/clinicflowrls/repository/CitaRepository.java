@@ -40,20 +40,8 @@ public interface CitaRepository extends JpaRepository<Cita,Long>, JpaSpecificati
     @Query("select c from Cita c join fetch c.paciente where c.profesional = ?1 and c.fechaHora > ?2 order by c.fechaHora")
     List<Cita> findByProfesionalAndFechaHoraAfterOrderByFechaHoraAsc(Profesional profesional, LocalDateTime fechaHora);
 
-    Page<Cita> filtrar(Specification specification, Pageable pageable);
 
 
-    static class UsuarioSpecs{
 
-        static Specification<Cita> nombreContains(String nombre){
-            return ((root, query, criteriaBuilder) ->
-                    nombre == null ? null : criteriaBuilder.like(criteriaBuilder.lower(root.get("nombre")),"%"+nombre.toLowerCase() + "%"));
-        }
-
-        static PredicateSpecification<Cita> nombreContainsv4(String nombre){
-            return ((from, criteriaBuilder) ->
-                    nombre == null ?  null : criteriaBuilder.like(criteriaBuilder.lower(from.get("nombre")),"%" + nombre.toLowerCase() + "%"));
-        }
-    }
 
 }

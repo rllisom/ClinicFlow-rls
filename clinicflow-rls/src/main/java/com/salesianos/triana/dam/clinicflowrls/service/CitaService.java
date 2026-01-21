@@ -11,6 +11,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.PredicateSpecification;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +59,34 @@ public class CitaService {
         List<Cita> citasPorRango = citaRepository.findByFechaHoraBetween(fechaInicio,fechaFin);
         if(citasPorRango.isEmpty()) throw new IllegalArgumentException("No hay citas en ese rango");
         return citasPorRango;
+    }
+
+    public List<Cita> filtrar(LocalDateTime fecha, String nombreProfesional){
+        Specification<Cita> spec = Specification.where(CitaSpecs.fechaContains(fecha))
+                .and(CitaSpecs.buscarPorProfesional(nombreProfesional));
+
+        List<Cita> citasFiltradas = citaRepository.findAll(spec);
+        if(citasFiltradas.isEmpty())
+            throw new EntityNotFoundException("No se han encontrado citas con los criterios indicados");
+        return citasFiltradas;
+    }
+
+    private static class CitaSpecs{
+        public static Specification<Cita> fechaContains(LocalDateTime fecha){
+            return (root, query, criteriaBuilder) -> {
+                if(fecha == null) return null;
+                LocalDateTime inicioDia = fecha.toLocalDate().atStartOfDay();
+                LocalDateTime finDia = fecha.toLocalDate().atTime(23,59,59);
+                return criteriaBuilder.between(root.get("fechaHora"),inicioDia,finDia);
+            };
+        }
+
+        public static PredicateSpecification<Cita> buscarPorProfesional(String nombre){
+            return (from, builder) -> {
+                if (nombre == null) return null;
+                return builder.like(builder.lower(from.join("profesional").get("nombre")), "%" + nombre.toLowerCase() + "%");
+            };
+        }
     }
 
 
