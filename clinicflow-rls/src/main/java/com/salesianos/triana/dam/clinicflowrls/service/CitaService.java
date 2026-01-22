@@ -71,26 +71,6 @@ public class CitaService {
         return citasFiltradas;
     }
 
-    private static class CitaSpecs{
-        public static Specification<Cita> fechaContains(LocalDateTime fecha){
-            return (root, query, criteriaBuilder) -> {
-                if(fecha == null) return null;
-                LocalDateTime inicioDia = fecha.toLocalDate().atStartOfDay();
-                LocalDateTime finDia = fecha.toLocalDate().atTime(23,59,59);
-                return criteriaBuilder.between(root.get("fechaHora"),inicioDia,finDia);
-            };
-        }
-
-        public static PredicateSpecification<Cita> buscarPorProfesional(String nombre){
-            return (from, builder) -> {
-                if (nombre == null) return null;
-                return builder.like(builder.lower(from.join("profesional").get("nombre")), "%" + nombre.toLowerCase() + "%");
-            };
-        }
-    }
-
-
-
     public Cita crearCita(CreateCitaRequest citaRequest){
 
         Paciente paciente = pacienteRepository.findById(citaRequest.pacienteId())
@@ -149,6 +129,28 @@ public class CitaService {
         return citaRepository.save(cita);
 
     }
+
+
+    private static class CitaSpecs{
+        public static Specification<Cita> fechaContains(LocalDateTime fecha){
+            return (root, query, criteriaBuilder) -> {
+                if(fecha == null) return null;
+                LocalDateTime inicioDia = fecha.toLocalDate().atStartOfDay();
+                LocalDateTime finDia = fecha.toLocalDate().atTime(23,59,59);
+                return criteriaBuilder.between(root.get("fechaHora"),inicioDia,finDia);
+            };
+        }
+
+        public static PredicateSpecification<Cita> buscarPorProfesional(String nombre){
+            return (from, builder) -> {
+                if (nombre == null) return null;
+                return builder.like(builder.lower(from.join("profesional").get("nombre")), "%" + nombre.toLowerCase() + "%");
+            };
+        }
+    }
+
+
+
 
     public static Consulta toEntity(CreateConsultaRequest consulta, Cita cita){
         return Consulta.builder()
