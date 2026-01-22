@@ -3,7 +3,9 @@ package com.salesianos.triana.dam.clinicflowrls.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
+import org.springframework.data.jpa.domain.PredicateSpecification;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -55,5 +57,14 @@ public class Cita {
     @Override
     public final int hashCode() {
         return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
+    }
+
+    public class CitaSpecs {
+        public static PredicateSpecification<Cita> mayorEdad(LocalDate fechaFiltro){
+            return ((from, criteriaBuilder) ->
+                    criteriaBuilder.greaterThan(from.join("paciente").get("fechaNacimiento"),fechaFiltro)
+            );
+        }
+
     }
 }

@@ -16,6 +16,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,9 +62,9 @@ public class CitaService {
         return citasPorRango;
     }
 
-    public List<Cita> filtrar(LocalDateTime fecha, String nombreProfesional){
+    public List<Cita> filtrar(LocalDateTime fecha, String nombreProfesional, LocalDate fechaFiltro){
         Specification<Cita> spec = Specification.where(CitaSpecs.fechaContains(fecha))
-                .and(CitaSpecs.buscarPorProfesional(nombreProfesional));
+                .and(CitaSpecs.buscarPorProfesional(nombreProfesional)).and(Cita.CitaSpecs.mayorEdad(fechaFiltro));
 
         List<Cita> citasFiltradas = citaRepository.findAll(spec);
         if(citasFiltradas.isEmpty())
